@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AutoYouTube" parent="Theme.Material3.DayNight">
+        <item name="colorPrimary">#FF0000</item>
+        <item name="colorPrimaryDark">#CC0000</item>
+        <item name="colorAccent">#FF0000</item>
+        <item name="android:statusBarColor">#CC0000</item>
+    </style>
+</resources>

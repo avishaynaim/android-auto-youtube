@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AutoYouTube</string>
+    <string name="search_hint">Search YouTube</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="browse">Browse</string>
+    <string name="search">Search</string>
+    <string name="home">Home</string>
+    <string name="trending">Trending</string>
+    <string name="subscriptions">Subscriptions</string>
+    <string name="library">Library</string>
+    <string name="no_results">No results found</string>
+    <string name="error_loading">Error loading content</string>
+    <string name="sign_in_required">Sign in to access your subscriptions</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="repeat">Repeat</string>
+    <string name="queue">Queue</string>
+    <string name="authenticate">Authenticate</string>
+    <string name="api_key_missing">YouTube API key not configured</string>
+    
+    <!-- YouTube API Key - User must provide their own -->
+    <!-- To get an API key: https://console.cloud.google.com/ -->
+    <!-- Enable YouTube Data API v3 and create credentials -->
+    <string name="youtube_api_key" translatable="false">YOUR_API_KEY_HERE</string>
+</resources>

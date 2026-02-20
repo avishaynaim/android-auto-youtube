@@ -1,0 +1,55 @@
+name: Build Android Auto YouTube App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      
+    - name: Build debug APK
+      run: |
+        cd android-auto-youtube
+        chmod +x gradlew
+        ./gradlew assembleDebug
+      env:
+        YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: android-auto-youtube/app/build/outputs/apk/debug/app-debug.apk
+        
+    - name: Verify Android Auto Configuration
+      run: |
+        echo "Checking AndroidManifest.xml for Android Auto configuration..."
+        grep -A5 "com.google.android.gms.car.application" android-auto-youtube/app/src/main/AndroidManifest.xml
+        echo "Checking automotive_app_desc.xml..."
+        cat android-auto-youtube/app/src/main/res/xml/automotive_app_desc.xml

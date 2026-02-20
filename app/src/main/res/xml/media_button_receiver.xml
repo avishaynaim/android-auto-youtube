@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<media-button-receiver xmlns:android="http://schemas.android.com/apk/res/android">
+    <intent-filter>
+        <action android:name="android.intent.action.MEDIA_BUTTON" />
+    </intent-filter>
+</media-button-receiver>
