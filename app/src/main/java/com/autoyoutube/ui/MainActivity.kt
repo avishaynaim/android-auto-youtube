@@ -1,6 +1,9 @@
 package com.autoyoutube.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +12,8 @@ import com.autoyoutube.R
 import com.autoyoutube.data.YouTubeRepository
 import com.autoyoutube.databinding.ActivityMainBinding
 import com.autoyoutube.model.Video
+import com.autoyoutube.ui.activity.VideoPlayerActivity
+import com.autoyoutube.ui.settings.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,7 +21,6 @@ import kotlinx.coroutines.withContext
 
 /**
  * Main Activity - Phone UI for YouTube
- * This is the traditional Android app interface
  */
 class MainActivity : AppCompatActivity() {
 
@@ -41,8 +45,26 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         setupBottomNavigation()
         
-        // Load initial content
         loadContent(Tab.HOME)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            R.id.action_refresh -> {
+                loadContent(currentTab)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupUI() {
@@ -61,8 +83,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        videoAdapter = VideoAdapter { video ->
-            onVideoClicked(video)
+        videoAdapter = VideoAdapter { videoItem ->
+            onVideoClicked(videoItem)
         }
         
         binding.videoRecyclerView.apply {
@@ -77,12 +99,14 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home -> {
                     currentTab = Tab.HOME
                     binding.titleText.text = getString(R.string.home)
+                    binding.searchInput.visibility = View.GONE
                     loadContent(Tab.HOME)
                     true
                 }
                 R.id.nav_trending -> {
                     currentTab = Tab.TRENDING
                     binding.titleText.text = getString(R.string.trending)
+                    binding.searchInput.visibility = View.GONE
                     loadContent(Tab.TRENDING)
                     true
                 }
@@ -90,11 +114,13 @@ class MainActivity : AppCompatActivity() {
                     currentTab = Tab.SEARCH
                     binding.titleText.text = getString(R.string.search)
                     binding.searchInput.visibility = View.VISIBLE
+                    binding.searchInput.text?.clear()
                     true
                 }
                 R.id.nav_playlists -> {
                     currentTab = Tab.PLAYLISTS
                     binding.titleText.text = getString(R.string.library)
+                    binding.searchInput.visibility = View.GONE
                     loadContent(Tab.PLAYLISTS)
                     true
                 }
@@ -111,7 +137,14 @@ class MainActivity : AppCompatActivity() {
                 when (tab) {
                     Tab.HOME -> youTubeRepository.getHomeContent()
                     Tab.TRENDING -> youTubeRepository.getTrendingContent()
-                    Tab.SEARCH -> youTubeRepository.searchVideos(binding.searchInput.text.toString())
+                    Tab.SEARCH -> {
+                        val query = binding.searchInput.text.toString()
+                        if (query.isEmpty()) {
+                            youTubeRepository.getHomeContent()
+                        } else {
+                            youTubeRepository.searchVideos(query)
+                        }
+                    }
                     Tab.PLAYLISTS -> youTubeRepository.getPlaylistVideos("PL1")
                 }
             }
@@ -130,6 +163,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun searchVideos(query: String) {
+        if (query.isEmpty()) {
+            Toast.makeText(this, R.string.search_hint, Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         binding.swipeRefresh.isRefreshing = true
         
         CoroutineScope(Dispatchers.Main).launch {
@@ -146,9 +184,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onVideoClicked(video: Video) {
-        // Open video detail or start playback
-        Toast.makeText(this, "Playing: ${video.title}", Toast.LENGTH_SHORT).show()
-        // In full implementation, start video player
+    private fun onVideoClicked(videoItem: VideoItem) {
+        // Open video player
+        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_ID, videoItem.id)
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_TITLE, videoItem.title)
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_CHANNEL, videoItem.channel)
+        }
+        startActivity(intent)
     }
 }
