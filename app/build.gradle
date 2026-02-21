@@ -7,6 +7,10 @@ android {
     namespace 'com.autoyoutube'
     compileSdk 34
 
+    buildFeatures {
+        viewBinding true
+    }
+
     defaultConfig {
         applicationId "com.autoyoutube"
         minSdk 26
