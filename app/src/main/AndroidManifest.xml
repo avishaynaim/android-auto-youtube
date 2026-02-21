@@ -53,6 +53,13 @@
             android:label="Settings"
             android:theme="@style/Theme.AutoYouTube" />
 
+        <!-- Search Activity -->
+        <activity
+            android:name=".ui.search.SearchActivity"
+            android:exported="false"
+            android:label="@string/search"
+            android:theme="@style/Theme.AutoYouTube" />
+
         <!-- ============================================ -->
         <!-- ANDROID AUTO CONFIGURATION - CRITICAL!      -->
         <!-- ============================================ -->
