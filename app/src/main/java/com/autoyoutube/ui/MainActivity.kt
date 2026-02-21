@@ -1,6 +1,5 @@
 package com.autoyoutube.ui
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -10,7 +9,6 @@ import com.autoyoutube.R
 import com.autoyoutube.data.YouTubeRepository
 import com.autoyoutube.databinding.ActivityMainBinding
 import com.autoyoutube.model.Video
-import com.autoyoutube.ui.settings.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
