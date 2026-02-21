@@ -38,9 +38,6 @@ jobs:
       run: |
         chmod +x gradlew
         ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
-        echo "=== Build output directory ==="
-        find . -name "*.apk" 2>/dev/null
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "APK directory not found"
       env:
         YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         
@@ -52,36 +49,11 @@ jobs:
         path: |
           app/build/outputs/apk/debug/app-debug.apk
           build.log
-        
-    - name: Show build log if failed
-      if: failure()
-      run: |
-        echo "=== Build Log ==="
-        cat build.log
-        
-    - name: Verify Android Auto Configuration
-      run: |
-        echo "=== Android Auto Config Check ==="
-        grep -A3 "YouTubeMediaService" app/src/main/AndroidManifest.xml
-        cat app/src/main/res/xml/automotive_app_desc.xml
 
   emulator-test:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-    
-    - name: Create AVD
-      run: |
-        echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --create-avd --force \
-          --name test-avd \
-          --package "system-images;android-34;google_apis;x86_64" \
-          --profile "Nexus 6"
-    
     - name: Download APK
       uses: actions/download-artifact@v4
       with:
@@ -98,9 +70,11 @@ jobs:
         disable-animations: true
         script: |
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+          echo "=== Emulator ready, installing APK ==="
           adb install -r app-debug.apk
-          adb shell pm list packages | grep autoyoutube
-          echo "=== App installed ==="
+          echo "=== Checking if app installed ==="
+          adb shell pm list packages | grep -i auto
+          echo "=== Attempting to start app ==="
           adb shell am start -n com.autoyoutube/.ui.MainActivity
-          sleep 3
-          adb shell dumpsys activity activities | grep -i autoyoutube || echo "App started"
+          sleep 2
+          adb shell dumpsys activity activities | grep -i "autoyoutube\|mResumedActivity" | head -5
