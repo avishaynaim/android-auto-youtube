@@ -5,11 +5,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.autoyoutube.R
 import com.autoyoutube.databinding.ActivitySettingsBinding
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.Scope
-import com.google.api.services.youtube.YouTubeScopes
 
 /**
  * Settings Activity for configuring the app
@@ -17,7 +12,6 @@ import com.google.api.services.youtube.YouTubeScopes
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
-    private lateinit var googleSignInClient: GoogleSignInClient
 
     companion object {
         const val PREFS_NAME = "AutoYouTubePrefs"
@@ -75,33 +69,17 @@ class SettingsActivity : AppCompatActivity() {
                 .apply()
         }
 
-        // Sign in button
-        binding.signInButton.setOnClickListener {
-            signInWithGoogle()
-        }
+        // Sign in button - disabled in demo mode
+        binding.signInButton.isEnabled = false
+        binding.signInButton.text = "Sign In (N/A in Demo)"
 
         // Sign out button
-        binding.signOutButton.setOnClickListener {
-            signOutGoogle()
-        }
+        binding.signOutButton.isEnabled = false
 
         // About button
         binding.aboutButton.setOnClickListener {
             showAboutDialog()
         }
-
-        // Setup Google Sign-In
-        setupGoogleSignIn()
-    }
-
-    private fun setupGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestScopes(Scope(YouTubeScopes.YOUTUBE_READONLY))
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-        updateAuthStatus()
     }
 
     private fun loadSettings() {
@@ -117,6 +95,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.autoPlaySwitch.isChecked = prefs.getBoolean(PREF_AUTO_PLAY, true)
 
         updateDemoModeStatus(binding.demoModeSwitch.isChecked)
+        updateAuthStatus()
     }
 
     private fun saveApiKey() {
@@ -141,39 +120,8 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun updateAuthStatus() {
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        if (account != null) {
-            binding.signInButton.isEnabled = false
-            binding.signOutButton.isEnabled = true
-            binding.authStatus.text = "Signed in as: ${account.email}"
-            binding.authStatus.setTextColor(getColor(R.color.green))
-        } else {
-            binding.signInButton.isEnabled = true
-            binding.signOutButton.isEnabled = false
-            binding.authStatus.text = "Not signed in"
-            binding.authStatus.setTextColor(getColor(R.color.red))
-        }
-    }
-
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, 9001)
-    }
-
-    private fun signOutGoogle() {
-        googleSignInClient.signOut()
-            .addOnCompleteListener(this) {
-                updateAuthStatus()
-                Toast.makeText(this, "Signed out", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 9001) {
-            updateAuthStatus()
-        }
+        binding.authStatus.text = "Demo mode - Sign in unavailable"
+        binding.authStatus.setTextColor(getColor(R.color.gray))
     }
 
     private fun showAboutDialog() {
