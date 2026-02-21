@@ -41,8 +41,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // Android for Cars (Android Auto)
-    implementation 'com.google.android.gms:play-services-car:4.0.0'
+    // Android for Cars (Android Auto) - using version 3.0.0
+    implementation 'com.google.android.gms:play-services-car:3.0.0'
     implementation 'androidx.car.app:app:1.4.0'
 
     // Media playback
@@ -50,7 +50,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
 
-    // YouTube Data API
+    // YouTube Data API - using a stable version
     implementation 'com.google.api-client:google-api-client-android:2.2.0'
     implementation 'com.google.apis:google-api-services-youtube:v3-rev20231128-2.0.0'
     implementation 'com.google.http-client:google-http-client-gson:1.43.3'
