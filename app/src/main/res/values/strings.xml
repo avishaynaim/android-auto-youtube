@@ -26,4 +26,14 @@
     <!-- To get an API key: https://console.cloud.google.com/ -->
     <!-- Enable YouTube Data API v3 and create credentials -->
     <string name="youtube_api_key" translatable="false">YOUR_API_KEY_HERE</string>
+    
+    <!-- Demo mode messages -->
+    <string name="demo_playback_notice">Demo mode: Using sample audio</string>
+    <string name="demo_playback_message">Video playback requires YouTube API key and Premium subscription for background audio. Demo mode shows sample audio.</string>
+    
+    <!-- Player strings -->
+    <string name="player_loading">Loading video…</string>
+    <string name="player_error">Error playing video</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="exit_fullscreen">Exit fullscreen</string>
 </resources>

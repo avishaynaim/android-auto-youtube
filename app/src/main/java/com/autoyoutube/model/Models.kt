@@ -67,3 +67,29 @@ sealed class ApiResult<out T> {
     data class Error(val message: String, val code: Int = 0) : ApiResult<Nothing>()
     object Loading : ApiResult<Nothing>()
 }
+
+/**
+ * Video category for browsing
+ */
+data class Category(
+    val id: String,
+    val name: String,
+    val icon: String
+)
+
+/**
+ * Home screen section
+ */
+data class HomeSection(
+    val title: String,
+    val type: SectionType,
+    val videos: List<Video>
+)
+
+enum class SectionType {
+    CONTINUE_WATCHING,
+    RECOMMENDED,
+    TRENDING,
+    NEW_UPLOADS,
+    PLAYLISTS
+}
