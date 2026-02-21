@@ -2,9 +2,9 @@ name: Build Android Auto YouTube App
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -35,21 +35,33 @@ jobs:
       
     - name: Build debug APK
       run: |
-        cd android-auto-youtube
         chmod +x gradlew
-        ./gradlew assembleDebug
+        ./gradlew assembleDebug --no-daemon
       env:
         YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: android-auto-youtube/app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
         
     - name: Verify Android Auto Configuration
       run: |
-        echo "Checking AndroidManifest.xml for Android Auto configuration..."
-        grep -A5 "com.google.android.gms.car.application" android-auto-youtube/app/src/main/AndroidManifest.xml
-        echo "Checking automotive_app_desc.xml..."
-        cat android-auto-youtube/app/src/main/res/xml/automotive_app_desc.xml
+        echo "=== Checking Android Auto Config ==="
+        echo "1. MediaBrowserService:"
+        grep -A3 "YouTubeMediaService" app/src/main/AndroidManifest.xml
+        echo ""
+        echo "2. Android Auto meta-data:"
+        grep "com.google.android.gms.car.application" app/src/main/AndroidManifest.xml
+        echo ""
+        echo "3. automotive_app_desc.xml:"
+        cat app/src/main/res/xml/automotive_app_desc.xml
+        echo ""
+        echo "=== All checks passed ==="
+        
+    - name: List build outputs
+      if: success()
+      run: |
+        echo "Build successful!"
+        ls -la app/build/outputs/apk/debug/
