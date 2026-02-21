@@ -6,4 +6,10 @@
         <item name="colorAccent">#FF0000</item>
         <item name="android:statusBarColor">#CC0000</item>
     </style>
+
+    <style name="Theme.AutoYouTube.NoActionBar" parent="Theme.AutoYouTube">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
 </resources>

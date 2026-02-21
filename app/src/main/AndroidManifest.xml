@@ -21,17 +21,23 @@
         android:theme="@style/Theme.AutoYouTube"
         tools:targetApi="34">
 
-        <!-- MAIN ACTIVITY - Phone UI -->
+        <!-- Splash Activity -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.splash.SplashActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.AutoYouTube">
+            android:theme="@style/Theme.AutoYouTube.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- MAIN ACTIVITY - Phone UI -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AutoYouTube" />
 
         <!-- Video Player Activity -->
         <activity
