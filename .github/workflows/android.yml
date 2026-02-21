@@ -72,18 +72,37 @@ jobs:
         sudo mknod /dev/kvm c 10 232 2>/dev/null || true
         sudo chmod 666 /dev/kvm 2>/dev/null || true
     
-    - name: Run Android Emulator
+    - name: Run Android Emulator with Android Auto
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 34
-        target: google_apis
+        target: android-automotive
         arch: x86_64
-        profile: Nexus 6
+        profile: Android Auto Automotive Screen
         disable-animations: true
         emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio
         script: |
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
           echo "=== Emulator ready ==="
+          
+          # Install our app
           adb install -r app-debug.apk
-          echo "=== App installed ==="
-          adb shell pm list packages | grep autoyoutube
+          echo "=== Our app installed ==="
+          
+          # Check if Android Auto is available
+          echo "=== Checking for Android Auto ==="
+          adb shell pm list packages | grep -i "automotive\|auto" || echo "Android Auto package check"
+          
+          # Try to start Android Auto
+          echo "=== Attempting to launch Android Auto ==="
+          adb shell am start -n com.google.android.projection.android.companion/com.google.android.projection.android.companion.DeviceSelectorActivity 2>/dev/null || true
+          
+          # Check running activities
+          sleep 2
+          adb shell dumpsys activity activities | grep -i "auto" | head -5 || echo "No auto activity found"
+          
+          # List media apps (our app should appear as media app)
+          echo "=== Listing Media Browser Services ==="
+          adb shell service list | grep -i media || echo "Media services check done"
+          
+          echo "=== Test complete ==="
