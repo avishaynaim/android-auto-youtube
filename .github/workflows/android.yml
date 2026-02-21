@@ -34,35 +34,36 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
       
+    - name: Show directory structure
+      run: ls -la
+      
     - name: Build debug APK
       run: |
         chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+        echo "=== Build output directory ==="
+        find . -name "*.apk" 2>/dev/null
+        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "APK directory not found"
       env:
         YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          app/build/outputs/apk/debug/app-debug.apk
+          build.log
+        
+    - name: Show build log if failed
+      if: failure()
+      run: |
+        echo "=== Build Log ==="
+        cat build.log
         
     - name: Verify Android Auto Configuration
       run: |
-        echo "=== Checking Android Auto Config ==="
-        echo "1. MediaBrowserService:"
+        echo "=== Android Auto Config Check ==="
         grep -A3 "YouTubeMediaService" app/src/main/AndroidManifest.xml
-        echo ""
-        echo "2. Android Auto meta-data:"
-        grep "com.google.android.gms.car.application" app/src/main/AndroidManifest.xml
-        echo ""
-        echo "3. automotive_app_desc.xml:"
         cat app/src/main/res/xml/automotive_app_desc.xml
-        echo ""
-        echo "=== All checks passed ==="
-        
-    - name: List build outputs
-      if: success()
-      run: |
-        echo "Build successful!"
-        ls -la app/build/outputs/apk/debug/
