@@ -16,5 +16,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Android Auto configuration -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <service
+            android:name="com.autoyoutube.service.YouTubeMediaService"
+            android:exported="true"
+            android:label="AutoYouTube Media Service">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
     </application>
 </manifest>
