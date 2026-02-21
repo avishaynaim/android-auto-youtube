@@ -8,9 +8,6 @@ import com.autoyoutube.data.YouTubeRepository
 /**
  * Media Browser Service for Android Auto
  * This is the KEY SERVICE that makes the app visible in Android Auto!
- * 
- * Without this service properly configured, the app won't show up
- * in the Android Auto launcher.
  */
 class YouTubeMediaService : MediaBrowserServiceCompat() {
 
@@ -24,7 +21,9 @@ class YouTubeMediaService : MediaBrowserServiceCompat() {
         const val MEDIA_ID_TRENDING = "trending"
         const val MEDIA_ID_SEARCH = "search"
         const val MEDIA_ID_PLAYLISTS = "playlists"
-        const val MEDIA_BROWSER_ROOT_ID = "auto_youtube_root"
+        const val MEDIA_ID_MUSIC = "music"
+        const val MEDIA_ID_GAMING = "gaming"
+        const val MEDIA_ID_NEWS = "news"
     }
 
     override fun onCreate() {
@@ -48,7 +47,8 @@ class YouTubeMediaService : MediaBrowserServiceCompat() {
         clientUid: Int,
         rootHints: Bundle?
     ): BrowserRoot {
-        // This is critical! Return the root ID for Android Auto to build the menu
+        // Allow all packages to browse (Android Auto will use this)
+        // In production, you might want to restrict this
         return BrowserRoot(MEDIA_ROOT_ID, null)
     }
 
@@ -56,49 +56,98 @@ class YouTubeMediaService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowser.MediaItem>>
     ) {
-        // Load children based on the parent ID
-        // Android Auto will call this to get the menu items
         val items = mutableListOf<MediaBrowser.MediaItem>()
 
-        when (parentId) {
-            MEDIA_ROOT_ID -> {
-                // Root menu - these appear as tabs in Android Auto
-                items.add(createBrowsableItem(MEDIA_ID_HOME, "Home", "🏠"))
-                items.add(createBrowsableItem(MEDIA_ID_TRENDING, "Trending", "📈"))
-                items.add(createBrowsableItem(MEDIA_ID_SEARCH, "Search", "🔍"))
-                items.add(createBrowsableItem(MEDIA_ID_PLAYLISTS, "Playlists", "📋"))
+        try {
+            when (parentId) {
+                MEDIA_ROOT_ID -> {
+                    // Root menu - these appear as tabs in Android Auto
+                    items.add(createBrowsableItem(MEDIA_ID_HOME, "🏠 Home", "Your personalized home"))
+                    items.add(createBrowsableItem(MEDIA_ID_TRENDING, "🔥 Trending", "Popular videos"))
+                    items.add(createBrowsableItem(MEDIA_ID_MUSIC, "🎵 Music", "Music videos"))
+                    items.add(createBrowsableItem(MEDIA_ID_SEARCH, "🔍 Search", "Search YouTube"))
+                    items.add(createBrowsableItem(MEDIA_ID_PLAYLISTS, "📋 Playlists", "Your playlists"))
+                }
+                
+                MEDIA_ID_HOME -> {
+                    // Load home content
+                    val videos = youTubeRepository.getHomeContentSync()
+                    items.addAll(videos)
+                    if (videos.isEmpty()) {
+                        // Add placeholder content
+                        items.add(createPlayableItem("demo1", "Welcome to AutoYouTube", "Tap to play demo"))
+                        items.add(createPlayableItem("demo2", "Configure API key in Settings", "For real YouTube content"))
+                    }
+                }
+                
+                MEDIA_ID_TRENDING -> {
+                    val videos = youTubeRepository.getTrendingContentSync()
+                    items.addAll(videos)
+                    if (videos.isEmpty()) {
+                        items.add(createPlayableItem("trending_demo1", "🔥 Trending Video 1", "Most popular"))
+                        items.add(createPlayableItem("trending_demo2", "🔥 Trending Video 2", "Viral content"))
+                    }
+                }
+                
+                MEDIA_ID_MUSIC -> {
+                    // Music category
+                    items.add(createPlayableItem("music1", "🎵 Music Video 1", "Official Music Video"))
+                    items.add(createPlayableItem("music2", "🎵 Music Video 2", "Official Music Video"))
+                    items.add(createPlayableItem("music3", "🎵 Music Video 3", "Official Music Video"))
+                }
+                
+                MEDIA_ID_SEARCH -> {
+                    // Search instructions
+                    items.add(createBrowsableItem("search_tips", "💡 Search Tips", "How to search"))
+                }
+                
+                MEDIA_ID_PLAYLISTS -> {
+                    val playlists = youTubeRepository.getPlaylistsSync()
+                    items.addAll(playlists)
+                    if (playlists.isEmpty()) {
+                        items.add(createBrowsableItem("playlist_demo1", "❤️ Favorites", "Your favorite videos"))
+                        items.add(createBrowsableItem("playlist_demo2", "⏰ Watch Later", "Save for later"))
+                    }
+                }
+                
+                "search_tips" -> {
+                    items.add(createPlayableItem("search_tip_1", "Say 'Hey Google, search YouTube for [query]'", "Voice search"))
+                }
             }
-            MEDIA_ID_HOME -> {
-                // Load home content (recommended videos)
-                // In a real app, this would fetch from YouTube API
-                items.addAll(youTubeRepository.getHomeContent())
-            }
-            MEDIA_ID_TRENDING -> {
-                // Load trending content
-                items.addAll(youTubeRepository.getTrendingContent())
-            }
-            MEDIA_ID_SEARCH -> {
-                // Search would be handled differently in Android Auto
-                items.add(createBrowsableItem("search_trending", "Popular Searches", "🔥"))
-            }
-            MEDIA_ID_PLAYLISTS -> {
-                // User's playlists
-                items.addAll(youTubeRepository.getPlaylists())
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Return error items
+            items.add(createPlayableItem("error", "Error loading content", e.message ?: "Unknown error"))
         }
 
         result.sendResult(items)
     }
 
-    private fun createBrowsableItem(mediaId: String, title: String, icon: String): 
-            MediaBrowser.MediaItem {
+    override fun onLoadItem(itemId: String, result: Result<MediaBrowser.MediaItem>) {
+        super.onLoadItem(itemId, result)
+    }
+
+    private fun createBrowsableItem(mediaId: String, title: String, subtitle: String): MediaBrowser.MediaItem {
         val description = androidx.media.MediaDescriptionCompat.Builder()
             .setMediaId(mediaId)
             .setTitle(title)
-            .setIconUri(android.net.Uri.parse("android.resource://${packageName}/drawable/ic_launcher"))
+            .setSubtitle(subtitle)
+            .setIconUri(android.net.Uri.parse("android.resource://${packageName}/drawable/ic_launcher_foreground"))
             .build()
         
         return MediaBrowser.MediaItem(description, MediaBrowser.MediaItem.FLAG_BROWSABLE)
+    }
+
+    private fun createPlayableItem(mediaId: String, title: String, subtitle: String): MediaBrowser.MediaItem {
+        val description = androidx.media.MediaDescriptionCompat.Builder()
+            .setMediaId(mediaId)
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            .setIconUri(android.net.Uri.parse("https://i.ytimg.com/vi/$mediaId/maxresdefault.jpg"))
+            .setMediaUri(android.net.Uri.parse("https://www.youtube.com/watch?v=$mediaId"))
+            .build()
+        
+        return MediaBrowser.MediaItem(description, MediaBrowser.MediaItem.FLAG_PLAYABLE)
     }
 
     override fun onDestroy() {
@@ -107,7 +156,7 @@ class YouTubeMediaService : MediaBrowserServiceCompat() {
     }
 
     inner class MediaSessionCallback : MediaSessionCompat.Callback() {
-        // Handle media controls from Android Auto
+        
         override fun onPlay() {
             // Start playback
         }
@@ -130,6 +179,21 @@ class YouTubeMediaService : MediaBrowserServiceCompat() {
 
         override fun onSeekTo(pos: Long) {
             // Seek to position
+        }
+
+        override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
+            // Play specific media
+            mediaId?.let {
+                // Start playback
+            }
+        }
+
+        override fun onSearch(query: String?, extras: Bundle?) {
+            // Handle search from Android Auto
+            // This is called when user uses voice search
+            query?.let {
+                // Perform search
+            }
         }
     }
 }
