@@ -61,7 +61,7 @@ jobs:
         path: .
     
     - name: Run Android Emulator Test
-      uses: reactivecircus/android-emulator-runner@v2
+      uses: reactivecircus/android-emulator-runner@v2.21.0
       with:
         api-level: 34
         target: google_apis
