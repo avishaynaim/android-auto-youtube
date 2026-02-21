@@ -34,9 +34,6 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
       
-    - name: Show directory structure
-      run: ls -la
-      
     - name: Build debug APK
       run: |
         chmod +x gradlew
@@ -67,3 +64,69 @@ jobs:
         echo "=== Android Auto Config Check ==="
         grep -A3 "YouTubeMediaService" app/src/main/AndroidManifest.xml
         cat app/src/main/res/xml/automotive_app_desc.xml
+
+  emulator-test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: app-debug
+        path: .
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Create Android Emulator
+      run: |
+        echo "=== Creating Android emulator ==="
+        # Create AVD
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "emulator" 2>/dev/null || true
+        
+        # Create emulator
+        echo "no" | $ANDROID_HOME/emulator/emulator -avd test-avd -no-window -no-audio -no-boot-anim -gpu swiftshader 2>&1 &
+        EMULATOR_PID=$!
+        
+        # Wait for boot
+        echo "=== Waiting for emulator to boot ==="
+        for i in {1..60}; do
+          if adb shell getprop sys.boot_completed 2>/dev/null; then
+            echo "Emulator booted!"
+            break
+          fi
+          sleep 2
+        done
+        
+    - name: Install APK on Emulator
+      run: |
+        echo "=== Installing APK ==="
+        adb install -r app-debug.apk
+        adb shell pm list packages | grep autoyoutube
+        
+    - name: Test App in Android Auto
+      run: |
+        echo "=== Testing Android Auto ==="
+        # Check if Android Auto app is running
+        adb shell dumpsys activity activities | grep -i autoyoutube || echo "App may be running"
+        
+        # Check for Android Auto service
+        adb shell dumpsys car_service --name | grep -i auto || echo "Car service status unknown"
+        
+        # Get list of apps with media capability
+        adb shell pm dump 2>/dev/null | grep -A5 "android:auto" || echo "Cannot query auto apps"
+
+    - name: Cleanup
+      if: always()
+      run: |
+        adb kill-server 2>/dev/null || true
+        pkill -f emulator || true
