@@ -68,10 +68,9 @@ jobs:
     
     - name: Setup KVM
       run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
-        sudo mkdir -p /dev/kvm
-        sudo mknod /dev/kvm c 10 232
-        sudo chmod 666 /dev/kvm
+        sudo mkdir -p /dev/kvm 2>/dev/null || true
+        sudo mknod /dev/kvm c 10 232 2>/dev/null || true
+        sudo chmod 666 /dev/kvm 2>/dev/null || true
     
     - name: Run Android Emulator
       uses: reactivecircus/android-emulator-runner@v2
