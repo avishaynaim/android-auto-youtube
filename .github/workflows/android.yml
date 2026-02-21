@@ -72,6 +72,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Create AVD
+      run: |
+        echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --create-avd --force \
+          --name test-avd \
+          --package "system-images;android-34;google_apis;x86_64" \
+          --profile "Nexus 6"
+    
     - name: Download APK
       uses: actions/download-artifact@v4
       with:
