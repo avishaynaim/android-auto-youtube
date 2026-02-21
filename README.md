@@ -14,15 +14,54 @@ An Android Auto application that integrates YouTube for hands-free video browsin
 
 ## Features
 
-- 📱 **Android Auto Integration** - Fully integrated with Android Auto's media browser
-- 🔍 **Search** - Search YouTube videos
+- 🚗 **Android Auto Integration** - Fully integrated with Android Auto's media browser
+- 🔍 **Search** - Search YouTube videos (with debounced input)
 - 📈 **Trending** - Browse trending videos
 - 📋 **Playlists** - Access your YouTube playlists
 - 🎵 **Media Controls** - Full media session support for car controls
+- 🌙 **Dark Mode** - Support for dark theme
+- ⚙️ **Settings** - Configure API key, demo mode, preferences
+- 🎬 **Video Player** - ExoPlayer-based video playback
+- 📱 **Phone UI** - Full phone interface alongside Auto
+
+## App Screens
+
+### Phone App
+- **Splash Screen** - App loading with branding
+- **Home** - Recommended videos
+- **Trending** - Popular videos
+- **Search** - Search with real-time results
+- **Playlists** - View your playlists
+- **Video Player** - Play videos with controls
+- **Settings** - Configure app preferences
+
+### Android Auto
+- **Home Tab** - Recommended content
+- **Trending Tab** - Popular videos
+- **Music Tab** - Music videos
+- **Search Tab** - Search YouTube
+- **Playlists Tab** - Your playlists
+
+## Demo Mode
+
+The app works out of the box with demo data:
+- 10 sample videos
+- 5 sample playlists
+- Search works on demo data
+- No API key needed for testing
+
+## Real YouTube Data
+
+To enable real YouTube content:
+
+1. Get API key from https://console.cloud.google.com/
+2. Enable "YouTube Data API v3"
+3. Add key to `app/src/main/res/values/strings.xml`:
+```xml
+<string name="youtube_api_key">YOUR_API_KEY_HERE</string>
+```
 
 ## Why This Works in Android Auto
-
-The key issue with the previous version was missing Android Auto configuration. This version includes:
 
 ### 1. AndroidManifest.xml Configuration
 ```xml
@@ -53,98 +92,88 @@ The app implements `MediaBrowserServiceCompat` which is required for Android Aut
 
 ## Testing Without Building
 
-### Static Analysis (No Android SDK Required)
-
-Verify the configuration is correct:
+### Static Analysis (No SDK Required)
 
 ```bash
-# Check AndroidManifest.xml has the required entries
-grep -A3 "com.google.android.gms.car.application" app/src/main/AndroidManifest.xml
-
-# Check automotive_app_desc.xml
-cat app/src/main/res/xml/automotive_app_desc.xml
-
-# Check MediaBrowserService is declared
-grep -A5 "YouTubeMediaService" app/src/main/AndroidManifest.xml
+./verify-config.sh
 ```
 
-### Build & Test (Requires Android SDK)
+This verifies:
+- ✅ MediaBrowserService is declared
+- ✅ Android Auto meta-data is present
+- ✅ Required permissions are granted
+- ✅ Dependencies are configured
+
+### Build & Test
 
 1. **Install Android SDK**: https://developer.android.com/studio
-2. **Get YouTube API Key**: https://console.cloud.google.com/
-   - Enable YouTube Data API v3
-   - Create API credentials (API Key)
-3. **Build**:
+2. **Build**:
    ```bash
    ./gradlew assembleDebug
    ```
-4. **Install on phone**:
+3. **Install**:
    ```bash
    adb install app/build/outputs/apk/debug/app-debug.apk
    ```
-5. **Test in Android Auto**:
-   - Open Android Auto on your phone
-   - The app should appear in the app launcher
-   - Or use the Desktop Head Unit emulator
-
-### Using Android Auto Desktop Head Unit
-
-For testing without a car:
-
-1. Download Android Auto Desktop Head Unit: https://developer.android.com/training/automotive-media/testing
-2. Connect your phone via USB
-3. The app should appear
-
-## Configuration
-
-### API Key Setup
-
-1. Open `app/src/main/res/values/strings.xml`
-2. Replace `YOUR_API_KEY_HERE` with your YouTube Data API v3 key:
-```xml
-<string name="youtube_api_key">your_actual_api_key</string>
-```
-
-Or set as environment variable:
-```bash
-export YOUTUBE_API_KEY="your_api_key"
-```
+4. **Test in Android Auto**
 
 ## Project Structure
 
 ```
-app/
-├── src/main/
-│   ├── java/com/autoyoutube/
-│   │   ├── ui/           # Phone UI (MainActivity, VideoAdapter)
-│   │   ├── service/      # Android Auto service (YouTubeMediaService)
-│   │   ├── data/         # YouTube API integration
-│   │   └── model/        # Data models
-│   └── res/
-│       ├── xml/          # Android Auto descriptors
-│       ├── layout/       # UI layouts
-│       └── values/       # Strings, themes
-├── build.gradle          # App dependencies
-└── proguard-rules.pro
+app/src/main/java/com/autoyoutube/
+├── ui/
+│   ├── MainActivity.kt         # Main phone UI
+│   ├── VideoAdapter.kt         # Video list adapter
+│   ├── activity/
+│   │   └── VideoPlayerActivity.kt
+│   ├── search/
+│   │   └── SearchActivity.kt
+│   ├── settings/
+│   │   └── SettingsActivity.kt
+│   └── splash/
+│       └── SplashActivity.kt
+├── service/
+│   ├── YouTubeMediaService.kt     # Android Auto browser
+│   └── YouTubePlaybackService.kt  # Media playback
+├── data/
+│   ├── YouTubeRepository.kt       # YouTube API client
+│   └── YouTubeStreamExtractor.kt  # Stream URL extraction
+├── model/
+│   └── Models.kt                  # Data classes
+├── util/
+│   └── Utils.kt                   # Utilities
+└── AutoYouTube.kt                 # Application class
 ```
 
 ## CI/CD
 
-GitHub Actions workflow is included in `.github/workflows/android.yml`:
+GitHub Actions workflow (`.github/workflows/android.yml`):
 - Builds debug APK on every push
 - Verifies Android Auto configuration
 - Uploads APK as artifact
 
 ## Known Limitations
 
-1. **Video Playback**: Full video playback in Android Auto has restrictions. The app currently shows the media browser. Actual video playback would require:
-   - YouTube Premium for background audio
-   - Custom streaming implementation with ExoPlayer
-   - Android Auto media session support
+1. **Video Playback**: Full video playback in Android Auto is restricted. The app provides audio streaming only. For full video:
+   - Use YouTube Premium for background audio
+   - Use official YouTube app
 
-2. **API Quotas**: YouTube Data API has quota limits. Consider implementing caching.
+2. **API Quotas**: YouTube Data API has daily limits (10,000 units/day free)
 
-3. **Authentication**: OAuth is prepared but needs user configuration for personalized content.
+3. **OAuth**: Requires app verification for production use
+
+## Tech Stack
+
+- **Language**: Kotlin
+- **Min SDK**: 26 (Android 8.0)
+- **Target SDK**: 34 (Android 14)
+- **Build System**: Gradle 8.2
+- **Key Libraries**:
+  - AndroidX Media
+  - Google Play Services (Car)
+  - ExoPlayer
+  - YouTube Data API
+  - Google Auth Library
 
 ## License
 
